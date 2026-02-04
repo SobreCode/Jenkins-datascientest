@@ -37,6 +37,9 @@ pipeline {
             message "Souhaitez-vous déployer le code sur la branche main ?"
             ok "Oui"
         }
+        steps {
+            echo "Déploiement approuvé par l'utilisateur."
+        }
     }
     stage ('Pushing and merging') {
         parallel {
