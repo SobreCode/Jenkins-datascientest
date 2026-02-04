@@ -23,11 +23,11 @@ pipeline {
                 # On construit l'image
                 docker build -t ${env.DOCKER_ID}/${env.DOCKER_IMAGE}:${env.DOCKER_TAG} .
                 
-                # On nettoie l'ancien conteneur s'il existe pour éviter les conflits
+                # On nettoie
                 docker rm -f jenkins || true 
                 
-                # On lance le nouveau (Note le $ devant DOCKER_TAG !)
-                docker run -d -p 8000:8000 --name jenkins ${DOCKER_ID}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                # Correction ici : ajout de env. pour chaque variable
+                docker run -d -p 8000:8000 --name jenkins ${env.DOCKER_ID}/${env.DOCKER_IMAGE}:${env.DOCKER_TAG}
                 """
             }
         }
