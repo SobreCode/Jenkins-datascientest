@@ -8,25 +8,22 @@ pipeline {
     }
 
     stages {
-        // Cette étape utilise une image Docker Python pour éviter l'erreur "pip3 not found"
         stage('Build & Test') {
-            agent {
-                docker { 
-                    image 'python:3.9-slim'
-                    // On réutilise le cache pip pour aller plus vite
-                    args '-v $HOME/.cache/pip:/root/.cache/pip'
-                }
-            }
             steps {
-                sh 'pip install --user -r requirements.txt'
-                sh 'python -m unittest discover' 
+                // On lance un conteneur python juste pour exécuter les tests
+                // Le -v ${WORKSPACE}:/app permet au conteneur de voir votre code
+                sh """
+                docker run --rm -v ${WORKSPACE}:/app -w /app python:3.9-slim bash -c "
+                    pip install --no-cache-dir -r requirements.txt && \
+                    python -m unittest discover
+                "
+                """
             }
         }
 
         stage ('Deploying') {
             steps {
                 script {
-                    // Utilisation de env. partout pour éviter les erreurs Groovy
                     sh """
                     docker build -t ${env.DOCKER_ID}/${env.DOCKER_IMAGE}:${env.DOCKER_TAG} .
                     docker rm -f jenkins || true 
@@ -50,6 +47,7 @@ pipeline {
             parallel {
                 stage ('Pushing') {
                     steps {
+                        // Utilisation de withCredentials pour Docker Hub
                         withCredentials([usernamePassword(credentialsId: 'docker_jenkins', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                             sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                             sh "docker push ${env.DOCKER_ID}/${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
@@ -58,7 +56,7 @@ pipeline {
                 }
                 stage ('Merging') {
                     steps {
-                        echo 'Merging logic would go here'
+                        echo 'Merging skipped'
                     }
                 }
             }
@@ -67,7 +65,6 @@ pipeline {
     
     post {
         always {
-            // On ne logout que si on était loggé
             sh 'docker logout || true'
         }
     }
