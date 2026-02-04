@@ -21,7 +21,7 @@ pipeline {
             script {
                 sh """
                 # On construit l'image
-                docker build -t ${DOCKER_ID}/${DOCKER_IMAGE}:${DOCKER_TAG} .
+                docker build -t ${env.DOCKER_ID}/${env.DOCKER_IMAGE}:${env.DOCKER_TAG} .
                 
                 # On nettoie l'ancien conteneur s'il existe pour éviter les conflits
                 docker rm -f jenkins || true 
